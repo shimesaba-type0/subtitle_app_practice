@@ -1,0 +1,121 @@
+<!-- templates/index.html -->
+
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>自動字幕生成WebApp - PoC</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 50px; background-color: #f2f2f2; }
+        .container { max-width: 800px; margin: auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        h1 { text-align: center; }
+        form { display: flex; flex-direction: column; }
+        input[type="file"] { margin-bottom: 20px; }
+        input[type="submit"] { padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        input[type="submit"]:hover { background-color: #45a049; }
+        .flash { color: red; text-align: center; margin-bottom: 20px; }
+        .srt-list { margin-top: 40px; }
+        .srt-list h2 { text-align: center; }
+        .srt-list ul { list-style-type: none; padding: 0; }
+        .srt-list li { padding: 10px; border-bottom: 1px solid #ddd; }
+        .srt-list li:last-child { border-bottom: none; }
+        .srt-list a { text-decoration: none; color: #008CBA; }
+        .srt-list a:hover { text-decoration: underline; }
+        .file-info { font-size: 0.9em; color: #555; }
+
+        /* ページネーションのスタイル */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination a, .pagination span {
+            margin: 0 5px;
+            padding: 8px 12px;
+            text-decoration: none;
+            color: #008CBA;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .pagination a:hover {
+            background-color: #f2f2f2;
+        }
+
+        .pagination .current {
+            background-color: #4CAF50;
+            color: white;
+            border: 1px solid #4CAF50;
+        }
+
+        .pagination .disabled {
+            color: #ccc;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>自動字幕生成PoC</h1>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="flash">
+              {% for message in messages %}
+                <p>{{ message }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+        <form method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept="video/*" required>
+            <input type="submit" value="字幕生成">
+        </form>
+
+        <!-- 追加: 最新10件のSRTファイルリスト -->
+        <div class="srt-list">
+            <h2>過去に変換したSRTファイル</h2>
+            {% if srt_files %}
+                <ul>
+                    {% for srt in srt_files %}
+                        <li>
+                            <a href="{{ url_for('srt_file', filename=srt.name) }}">{{ srt.name }}</a>
+                            <br>
+                            <span class="file-info">サイズ: {{ (srt.size / 1024) | round(2) }} KB | 変換日時: {{ srt.mtime | datetimeformat }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>過去のSRTファイルはありません。</p>
+            {% endif %}
+        </div>
+
+        <!-- ページネーションの追加 -->
+        {% if total_pages > 1 %}
+            <div class="pagination">
+                {% if page > 1 %}
+                    <a href="{{ url_for('upload_file', page=page-1) }}">&laquo; 前へ</a>
+                {% else %}
+                    <span class="disabled">&laquo; 前へ</span>
+                {% endif %}
+                
+                {% for p in range(1, total_pages + 1) %}
+                    {% if p == page %}
+                        <span class="current">{{ p }}</span>
+                    {% else %}
+                        <a href="{{ url_for('upload_file', page=p) }}">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page < total_pages %}
+                    <a href="{{ url_for('upload_file', page=page+1) }}">次へ &raquo;</a>
+                {% else %}
+                    <span class="disabled">次へ &raquo;</span>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
+
+

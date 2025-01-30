@@ -1,0 +1,24 @@
+# Python関連
+__pycache__/
+*.py[cod]
+
+# 環境変数ファイル
+.env
+
+# 仮想環境
+venv/
+env/
+ENV/
+
+# アップロードファイルと生成されたSRTファイル
+uploads/
+srt/
+
+# IDE関連
+.vscode/
+.idea/
+
+# その他
+*.log
+*.sqlite3
+

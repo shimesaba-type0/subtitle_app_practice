@@ -1,0 +1,70 @@
+<!-- templates/download.html -->
+
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>字幕生成完了</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 50px; background-color: #f2f2f2; }
+        .container { max-width: 600px; margin: auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); text-align: center; }
+        h1 { text-align: center; color: #4CAF50; }
+        a { display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #008CBA; color: white; text-decoration: none; border-radius: 4px; }
+        a:hover { background-color: #007B9E; }
+        .progress-container { width: 100%; background-color: #ddd; border-radius: 25px; margin-top: 20px; }
+        .progress-bar { width: 0%; height: 30px; background-color: #4CAF50; border-radius: 25px; text-align: center; line-height: 30px; color: white; }
+        .error { color: red; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>字幕生成中...</h1>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar">0%</div>
+        </div>
+        <div id="status-message"></div>
+        <br>
+        <a href="{{ url_for('upload_file') }}">別の動画をアップロード</a>
+    </div>
+
+    <script>
+        const taskId = "{{ task_id }}";
+        const progressBar = document.getElementById('progress-bar');
+        const statusMessage = document.getElementById('status-message');
+
+        function updateProgress() {
+            fetch(`/progress/${taskId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const progress = data.progress;
+                    if (progress >= 0 && progress <= 100) {
+                        progressBar.style.width = progress + '%';
+                        progressBar.textContent = progress + '%';
+                    }
+
+                    if (progress === 100) {
+                        // 生成完了時にダウンロードリンクを表示
+                        window.location.href = `/download_srt/${taskId}`;
+                    } else if (progress === -1) {
+                        // エラー時にメッセージを表示
+                        statusMessage.innerHTML = '<p class="error">エラーが発生しました。再度お試しください。</p>';
+                        progressBar.style.backgroundColor = 'red';
+                    } else {
+                        // まだ進行中
+                        setTimeout(updateProgress, 1000);  // 1秒後に再度確認
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching progress:', error);
+                    setTimeout(updateProgress, 1000);  // 1秒後に再度確認
+                });
+        }
+
+        // ページ読み込み時に進捗の確認を開始
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProgress();
+        });
+    </script>
+</body>
+</html>
+
